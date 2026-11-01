@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>M&M Clean - Gestão</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+
+    <header>
+        <div class="header-top">
+            <button class="menu-toggle" onclick="toggleMenu()"><i class="fa-solid fa-bars"></i></button>
+            <h1><i class="fa-solid fa-broom"></i> M&M Clean</h1>
+            <div style="width: 32px;"></div>
+        </div>
+        <nav id="menu-nav" class="menu-dropdown">
+            <button onclick="mudarAba('dashboard')" class="tab-btn active"><i class="fa-solid fa-chart-pie"></i> Dash</button>
+            <button onclick="mudarAba('servicos')" class="tab-btn"><i class="fa-solid fa-list-check"></i> Serviços</button>
+            <button onclick="mudarAba('agenda')" class="tab-btn"><i class="fa-solid fa-calendar-days"></i> Agenda</button>
+            <button onclick="mudarAba('entregas')" class="tab-btn"><i class="fa-solid fa-truck"></i> Entregas</button>
+            <button onclick="mudarAba('pendencias')" class="tab-btn"><i class="fa-solid fa-triangle-exclamation"></i> Pendências</button>
+            <button onclick="mudarAba('financeiro')" class="tab-btn"><i class="fa-solid fa-wallet"></i> Financeiro</button>
+        </nav>
+    </header>
+
+    <main>
+        <!-- DASHBOARD -->
+        <section id="tab-dashboard" class="tab-content active">
+            <h2>Dashboard do Mês Atual</h2>
+            
+            <div class="card card-minimizado" onclick="toggleDashboardDetalhes()">
+                <h3>Pendências Financeiras Totais (Clique para expandir dados do mês)</h3>
+                <p id="dash-min-pendencias">R$ 0,00</p>
+            </div>
+
+            <div id="dash-detalhes-container" style="display: none; margin-top: 15px;">
+                <div class="cards-grid">
+                    <div class="card">
+                        <h3>Faturamento (Mês)</h3>
+                        <p id="dash-faturamento">R$ 0,00</p>
+                    </div>
+                    <div class="card">
+                        <h3>Gastos (Mês)</h3>
+                        <p id="dash-gastos">R$ 0,00</p>
+                    </div>
+                    <div class="card">
+                        <h3>Valor em Caixa</h3>
+                        <p id="dash-lucro">R$ 0,00</p>
+                    </div>
+                    <div class="card">
+                        <h3>Entregas Pendentes</h3>
+                        <p id="dash-pendentes">0</p>
+                    </div>
+                </div>
+            </div>
+
+            <h3>Agenda do Dia (Hoje)</h3>
+            <div id="lista-agenda-hoje" class="lista-container"></div>
+
+            <div id="container-atrasados" style="display: none; margin-top: 20px;">
+                <h3 style="color: #b91c1c;"><i class="fa-solid fa-triangle-exclamation"></i> Serviços Atrasados</h3>
+                <div id="lista-agenda-atrasados" class="lista-container"></div>
+            </div>
+        </section>
+
+        <!-- SERVIÇOS -->
+        <section id="tab-servicos" class="tab-content">
+            <h2>Gerenciar Tipos de Serviço</h2>
+            <form id="form-servico" onsubmit="salvarServico(event)">
+                <input type="hidden" id="serv-id">
+                <input type="text" id="serv-nome" placeholder="Nome do Serviço (ex: Lavagem Sofá)" required>
+                <input type="number" step="0.01" id="serv-preco" placeholder="Preço Sugerido (R$)" required>
+                <label class="checkbox-label">
+                    <input type="checkbox" id="serv-coleta"> Requer Coleta/Entrega de Tapete?
+                </label>
+                <button type="submit" class="btn-primary"><i class="fa-solid fa-save"></i> Salvar Serviço</button>
+            </form>
+            <h3>Serviços Cadastrados</h3>
+            <div id="lista-servicos" class="lista-container"></div>
+        </section>
+
+        <!-- AGENDA -->
+        <section id="tab-agenda" class="tab-content">
+            <h2>Agenda de Serviços</h2>
+            <form id="form-agenda" onsubmit="salvarAgendamento(event)">
+                <input type="hidden" id="ag-id">
+                <input type="text" id="ag-cliente" placeholder="Nome do Cliente" required>
+                <input type="text" id="ag-telefone" placeholder="Telefone / WhatsApp (ex: 41999999999)" required>
+                <input type="text" id="ag-bairro" placeholder="Bairro" required>
+                <select id="ag-tipo" onchange="filtrarServicosPorTipo()" required>
+                    <option value="Visita / Orçamento">Visita / Orçamento</option>
+                    <option value="Execução no Local">Execução no Local (Estofado)</option>
+                    <option value="Coleta de Tapete">Coleta de Tapete</option>
+                </select>
+                <input type="datetime-local" id="ag-datahora" required>
+                <input type="text" id="ag-endereco" placeholder="Endereço Completo" required>
+
+                <h3>Adicionar Serviços ao Agendamento</h3>
+                <div class="servico-selecao-box" id="box-add-servico-container">
+                    <select id="select-add-servico" onchange="verificarSelecaoServicoEspecial(this)">
+                        <option value="">Selecione um serviço</option>
+                    </select>
+                    <input type="number" id="add-qtd" value="1" min="1" placeholder="Qtd" style="width: 70px;">
+                    <button type="button" class="btn-primary" id="btn-add-item-servico" onclick="adicionarItemServicoAgendamento()"><i class="fa-solid fa-plus"></i></button>
+                </div>
+
+                <div id="lista-itens-agendamento" class="lista-container" style="margin-top: 10px;"></div>
+
+                <div class="valores-calculo">
+                    <span>Valor Total do Agendamento: <strong id="lbl-valor-total">R$ 0,00</strong></span>
+                </div>
+
+                <button type="submit" class="btn-primary" style="margin-top: 15px;"><i class="fa-solid fa-calendar-check"></i> Salvar Agendamento</button>
+            </form>
+
+            <h3>Filtrar Compromissos por Data</h3>
+            <input type="date" id="filtro-agenda-data" onchange="renderizarAgenda()" style="margin-bottom: 15px;">
+
+            <h3>Compromissos Agendados</h3>
+            <div id="lista-agenda" class="lista-container"></div>
+        </section>
+
+        <!-- CONTROLE DE ENTREGAS -->
+        <section id="tab-entregas" class="tab-content">
+            <h2>Controle de Entregas</h2>
+            <div id="lista-entregas" class="lista-container"></div>
+        </section>
+
+        <!-- CONTROLE DE PENDÊNCIAS -->
+        <section id="tab-pendencias" class="tab-content">
+            <h2>Controle de Pendências & Atrasos</h2>
+            <div id="lista-pendencias" class="lista-container"></div>
+        </section>
+
+        <!-- FINANCEIRO & GASTOS -->
+        <section id="tab-financeiro" class="tab-content">
+            <h2>Controle Financeiro</h2>
+            
+            <div class="torre-container">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                    <h3 style="margin:0;">Balanço Financeiro - Últimos 6 Meses</h3>
+                    <button class="btn-acao btn-editar" onclick="toggleSecao('bloco-faturamento', this)">Esconder</button>
+                </div>
+                <div id="bloco-faturamento">
+                    <div id="grafico-torre" class="grafico-torre"></div>
+                </div>
+            </div>
+
+            <div id="dashboard-mes-selecionado" class="card" style="margin-bottom: 20px; display: none;">
+                <h3 id="titulo-mes-sel">Resumo do Mês</h3>
+                <p>Entradas: <span id="res-mes-entradas" style="color:green;">R$ 0,00</span></p>
+                <p>Saídas: <span id="res-mes-saidas" style="color:red;">R$ 0,00</span></p>
+                <p>Valor em Caixa: <span id="res-mes-lucro" style="color:blue;">R$ 0,00</span></p>
+                <button class="btn-acao btn-pdf" style="margin-top: 8px;" onclick="abrirPlanilhaDetalhes()">detalhar</button>
+            </div>
+
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                <h2 style="margin:0;">Lançamento de Gastos</h2>
+                <button class="btn-acao btn-editar" onclick="toggleSecao('form-gasto', this)">Esconder</button>
+            </div>
+            <form id="form-gasto" onsubmit="salvarGasto(event)">
+                <input type="text" id="gasto-descricao" placeholder="Descrição (ex: Gasolina, Almoço)" required>
+                <input type="number" step="0.01" id="gasto-valor" placeholder="Valor Total (R$)" required>
+                <select id="gasto-categoria" required>
+                    <option value="Combustível">Combustível</option>
+                    <option value="Alimentação">Alimentação</option>
+                    <option value="Insumos/Produtos">Insumos/Produtos</option>
+                    <option value="Outros">Outros</option>
+                </select>
+                <select id="gasto-tipo-pgto" onchange="alternarParcelas(this.value)" required>
+                    <option value="À Vista">À Vista</option>
+                    <option value="Parcelado">Parcelado</option>
+                </select>
+                <div id="container-parcelas" style="display:none;">
+                    <label>Quantidade de Parcelas:</label>
+                    <input type="number" id="gasto-qtd-parcelas" value="2" min="2" max="24">
+                </div>
+                <label>Data da 1ª Parcela ou Pagamento:</label>
+                <input type="date" id="gasto-data" required>
+                <button type="submit" class="btn-primary"><i class="fa-solid fa-plus"></i> Adicionar Gasto</button>
+            </form>
+
+            <h3>Histórico (Mês Atual)</h3>
+            <div id="lista-historico-mes" class="lista-container"></div>
+        </section>
+    </main>
+
+    <!-- MODAL DE FINALIZAÇÃO DE AGENDA / ENTREGA -->
+    <div id="modal-finalizar" class="modal">
+        <div class="modal-content">
+            <h3>Finalizar Serviço</h3>
+            <p id="modal-info-cliente"></p>
+            <p id="modal-info-total" style="font-weight: bold; color: var(--primary);"></p>
+            
+            <div id="container-coleta-check" style="display:none; margin: 10px 0;">
+                <label class="checkbox-label" style="color: #b91c1c; font-weight: bold;">
+                    <input type="checkbox" id="check-coleta-realizada"> Coleta realizada com sucesso?
+                </label>
+            </div>
+
+            <label>Forma de Pagamento:</label>
+            <select id="pag-forma">
+                <option value="Dinheiro">Dinheiro</option>
+                <option value="PIX">PIX</option>
+                <option value="Cartão Débito">Cartão Débito</option>
+                <option value="Cartão Crédito">Cartão Crédito</option>
+            </select>
+
+            <label style="margin-top: 10px;">Valor Pago pelo Cliente (R$):</label>
+            <input type="number" step="0.01" id="pag-valor-pago" placeholder="0.00">
+
+            <div class="modal-acoes" style="margin-top: 15px;">
+                <button class="btn-acao btn-concluir" onclick="executarFinalizacao()">Confirmar Finalização</button>
+                <button class="btn-acao btn-excluir" onclick="fecharModalFinalizar()">Cancelar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL DE RESOLUÇÃO DE PENDÊNCIA -->
+    <div id="modal-resolver-pendencia" class="modal">
+        <div class="modal-content">
+            <h3>Resolver Pendência</h3>
+            <p id="pend-modal-cliente"></p>
+            <p id="pend-modal-valor"></p>
+
+            <label>Valor Pago agora pelo Cliente (R$):</label>
+            <input type="number" step="0.01" id="pend-valor-pago-agora" placeholder="0.00" oninput="calcularRestantePendencia()">
+
+            <div id="container-motivo-restante" style="display: none; margin-top: 10px; background: #f1f5f9; padding: 10px; border-radius: 6px;">
+                <p>Restante pendente: <strong id="pend-valor-restante">R$ 0,00</strong></p>
+                <label>Justificativa para o restante:</label>
+                <select id="pend-motivo">
+                    <option value="">Selecione uma opção...</option>
+                    <option value="Desconto concedido">Desconto</option>
+                    <option value="Diferença cartão">Diferença cartão</option>
+                </select>
+            </div>
+
+            <div class="modal-acoes" style="margin-top: 15px;">
+                <button class="btn-acao btn-concluir" onclick="confirmarResolucaoPendencia()">Salvar Resolução</button>
+                <button class="btn-acao btn-excluir" onclick="fecharModalPendencia()">Cancelar</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
